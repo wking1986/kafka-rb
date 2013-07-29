@@ -14,7 +14,7 @@
 # limitations under the License.
 module Kafka
   module IO
-    attr_accessor :socket, :host, :port, :compression
+    attr_accessor :socket, :host, :port, :compression, :zkhost, :zkport
 
     HOST = "localhost"
     PORT = 9092
@@ -25,6 +25,30 @@ module Kafka
       self.port = port
       self.socket = TCPSocket.new(host, port)
     end
+#zookeeper consistent-hashing feature,added by liyong    
+    def get_host_from_zk(zkhost, zkport)
+      require 'zookeeper'
+      require 'consistent_hashing'
+      require 'socket'
+      @z = Zookeeper.new("#{zkhost}:#{zkport}")
+      @ring = ConsistentHashing::Ring.new
+      @host_local = Socket.gethostname
+      brokers = @z.get_children(:path => "/brokers/ids")[:children]
+      brokers.each do |broker|
+        res = @z.get(:path => "/brokers/ids/#{broker}")[:data]
+        @ring << res
+      end
+      @z.close
+      @ring.node_for(@host_local).split(":")[1..-1]
+    end  
+    def zkconnect(zkhost, zkport)
+      raise ArgumentError, "No zkhost or zkport specified" unless zkhost && zkport
+      self.zkhost = zkhost
+      self.zkport = zkport
+      self.host, self.port = get_host_from_zk(self.zkhost, self.zkport)
+      self.socket = TCPSocket.new(self.host, self.port)
+    end
+########################################################
 
     def reconnect
       self.socket = TCPSocket.new(self.host, self.port)
@@ -32,6 +56,16 @@ module Kafka
       self.disconnect
       raise
     end
+
+#zookeeper consistent-hashing feature,added by liyong    
+    def zkreconnect
+      self.host, self.port = get_host_from_zk(self.zkhost, self.zkport)
+      self.socket = TCPSocket.new(self.host, self.port)
+    rescue
+      self.disconnect
+      raise
+    end
+#####################################################
 
     def disconnect
       self.socket.close rescue nil
@@ -52,6 +86,16 @@ module Kafka
       self.disconnect
       raise SocketError, "cannot write: #{$!.message}"
     end
+
+#zookeeper consistent-hashing feature,added by liyong        
+    def zkwrite(data)
+      self.zkreconnect unless self.socket
+      self.socket.write(data)
+    rescue
+      self.disconnect
+      raise SocketError, "cannot write: #{$!.message}"
+    end
+#####################################################
 
   end
 end
