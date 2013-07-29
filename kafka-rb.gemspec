@@ -27,4 +27,6 @@ Gem::Specification.new do |s|
   else
     s.add_dependency(%q<rspec>, [">= 0"])
   end
+  s.add_dependency(%q<consistent-hashing>,[">=0.2.1"])
+  s.add_dependency(%q<zookeeper>,[">=1.4.4"])
 end
