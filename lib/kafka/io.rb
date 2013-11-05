@@ -25,7 +25,8 @@ module Kafka
       self.port = port
       self.socket = TCPSocket.new(host, port)
     end
-#zookeeper consistent-hashing feature,added by liyong    
+
+    # add 30~51 rows,zookeeper consistent-hashing feature
     def get_host_from_zk(zkhost, zkport)
       require 'zookeeper'
       require 'consistent_hashing'
@@ -48,7 +49,6 @@ module Kafka
       self.host, self.port = get_host_from_zk(self.zkhost, self.zkport)
       self.socket = TCPSocket.new(self.host, self.port)
     end
-########################################################
 
     def reconnect
       self.socket = TCPSocket.new(self.host, self.port)
@@ -57,7 +57,7 @@ module Kafka
       raise
     end
 
-#zookeeper consistent-hashing feature,added by liyong    
+    #add 61~67 rows,zookeeper consistent-hashing feature  
     def zkreconnect
       self.host, self.port = get_host_from_zk(self.zkhost, self.zkport)
       self.socket = TCPSocket.new(self.host, self.port)
@@ -65,7 +65,6 @@ module Kafka
       self.disconnect
       raise
     end
-#####################################################
 
     def disconnect
       self.socket.close rescue nil
@@ -87,7 +86,7 @@ module Kafka
       raise SocketError, "cannot write: #{$!.message}"
     end
 
-#zookeeper consistent-hashing feature,added by liyong        
+    #add 90~96 rows,zookeeper consistent-hashing feature     
     def zkwrite(data)
       self.zkreconnect unless self.socket
       self.socket.write(data)
@@ -95,7 +94,6 @@ module Kafka
       self.disconnect
       raise SocketError, "cannot write: #{$!.message}"
     end
-#####################################################
 
   end
 end

@@ -40,7 +40,7 @@ module Kafka
     end
   end
 
-#zookeeper consistent-hashing feature,added by liyong
+  # add 44~58 rows,zookeeper consistent-hashing feature
   class ZKProducer
     include Kafka::IO
     attr_accessor :topic, :partition
@@ -56,6 +56,5 @@ module Kafka
       self.zkwrite(Encoder.produce(self.topic, self.partition, messages, compression))
     end
   end
-######################################################
 
 end
